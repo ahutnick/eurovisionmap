@@ -8,6 +8,7 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
     <style>
         #map {
             width: 960px;
@@ -21,7 +22,9 @@
     <div id="map"></div>
 
     <script>
+        // Create Map
         var map = L.map("map").setView([41.57, 70.32], 2);
+        // Set labels and tile map as two different panes
         map.createPane('labels');
         map.getPane('labels').style.zIndex = 650;
         map.getPane('labels').style.pointerEvents = 'none';
@@ -35,22 +38,61 @@
             pane: 'labels'
         }).addTo(map);
 
-        // Host City Markers (currently set to city coordinates)
-        var nine = L.marker([55.761480634243156, 37.65177582945458]).bindPopup('2009: Moscow, Russia').addTo(map).openPopup();
-        var ten = L.marker([59.913722734735764, 10.75146110137051]).bindPopup('2010: Oslo, Norway').addTo(map);
-        var eleven = L.marker([51.222000066591775, 6.777945629354757]).bindPopup('2011: Düsseldorf, Germany').addTo(map);
-        var twelve = L.marker([40.40911651084919, 49.87279717970986]).bindPopup('2012: Baku, Azerbaijan').addTo(map);
-        var thirteen = L.marker([55.604207176905376, 13.004288332607715]).bindPopup('2013: Malmö, Sweden').addTo(map);
-        var fourteen = L.marker([55.676079797517744, 12.564981993068116]).bindPopup('2014: Copenhagen, Denmark').addTo(map);
-        var fifteen = L.marker([48.20709693896373, 16.372161468666455]).bindPopup('2015: Vienna, Austria').addTo(map);
-        var sixteen = L.marker([59.32673853128823, 18.072679759336534]).bindPopup('2016: Stockholm, Sweden').addTo(map);
-        var seventeen = L.marker([50.45668409173789, 30.534014165082667]).bindPopup('2017: Kyiv, Ukraine').addTo(map);
-        var eighteen = L.marker([38.7215539348787, -9.1387970150705]).bindPopup('2018: Lisbon, Portugal').addTo(map);
-        var nineteen = L.marker([32.0838839158771, 34.78233091145113]).bindPopup('2019: Tel Aviv, Israel').addTo(map);
-        var twentyone = L.marker([51.92499328957138, 4.47812209293861]).bindPopup('2021: Rotterdam, Netherlands').addTo(map);
-        var twentytwo = L.marker([45.068412068030895, 7.688968426987515]).bindPopup('2022: Turin, Italy').addTo(map);
-        var twentythree = L.marker([53.409524626854974, -2.9975656703291174]).bindPopup('2023: Liverpool, United Kingdom').addTo(map);
-        var twentyfour = L.marker([55.563800975211564, 12.976248883705855]).bindPopup('2024: Malmö, Sweden').addTo(map);
+        // Check that 
+        function updateShowOnMap(properties, winners=null) {
+            winners ? properties.showOnMap = true : properties.showOnMap = false;
+        }
+
+        // Set Fill Color Based on Win in Current Year
+        function style(feature, activeYear="19") {
+            var fillColor;
+            var winners = feature.properties.wins[activeYear]
+            if (!winners) {
+                fillColor = "#dedede";
+            } else if (winners["winner"]) {
+                fillColor = "#faf205";
+            } else if (winners["televote"]) {
+                fillColor = "#f50ac3";
+            } else if (winners["jury"]) {
+                fillColor = "#02227e";
+            }
+            return { color: "#000000", weight: 2, fillColor: fillColor, fillOpacity: .6 }
+        }
+
+        // Create Layer Group for Easier Style Switching
+        var countries = L.layerGroup().addTo(map);
+
+        // Load in geoJSON to Layer Group
+        $.getJSON("countrydata.geojson", function (countryData, activeYear) {
+                L.geoJson(countryData, {
+                    style: style,
+                    // Only show active countries
+                    /*filter: function(feature, layer) {
+                        return feature.properties.showOnMap;
+                    } */
+
+                }).addTo(countries);
+            });
+
+        // Host City Markers (currently set to city coordinates except for 2024)
+        var markers = []
+        markers.push(L.marker([55.761480634243156, 37.65177582945458]).bindPopup('2009: Moscow, Russia').addTo(map).openPopup());
+        markers.push(L.marker([59.913722734735764, 10.75146110137051]).bindPopup('2010: Oslo, Norway').addTo(map));
+        markers.push(L.marker([51.222000066591775, 6.777945629354757]).bindPopup('2011: Düsseldorf, Germany').addTo(map));
+        markers.push(L.marker([40.40911651084919, 49.87279717970986]).bindPopup('2012: Baku, Azerbaijan').addTo(map));
+        markers.push(L.marker([55.604207176905376, 13.004288332607715]).bindPopup('2013: Malmö, Sweden').addTo(map));
+        markers.push(L.marker([55.676079797517744, 12.564981993068116]).bindPopup('2014: Copenhagen, Denmark').addTo(map));
+        markers.push(L.marker([48.20709693896373, 16.372161468666455]).bindPopup('2015: Vienna, Austria').addTo(map));
+        markers.push(L.marker([59.32673853128823, 18.072679759336534]).bindPopup('2016: Stockholm, Sweden').addTo(map));
+        markers.push(L.marker([50.45668409173789, 30.534014165082667]).bindPopup('2017: Kyiv, Ukraine').addTo(map));
+        markers.push(L.marker([38.7215539348787, -9.1387970150705]).bindPopup('2018: Lisbon, Portugal').addTo(map));
+        markers.push(L.marker([32.0838839158771, 34.78233091145113]).bindPopup('2019: Tel Aviv, Israel').addTo(map));
+        // Placeholder for 2020 - To Add Later
+        markers.push(null);
+        markers.push(L.marker([51.92499328957138, 4.47812209293861]).bindPopup('2021: Rotterdam, Netherlands').addTo(map));
+        markers.push(L.marker([45.068412068030895, 7.688968426987515]).bindPopup('2022: Turin, Italy').addTo(map));
+        markers.push(L.marker([53.409524626854974, -2.9975656703291174]).bindPopup('2023: Liverpool, United Kingdom').addTo(map));
+        markers.push(L.marker([55.563800975211564, 12.976248883705855]).bindPopup('2024: Malmö, Sweden').addTo(map));
     </script>
 </body>
 
