@@ -38,11 +38,6 @@
             pane: 'labels'
         }).addTo(map);
 
-        // Check that 
-        function updateShowOnMap(properties, winners=null) {
-            winners ? properties.showOnMap = true : properties.showOnMap = false;
-        }
-
         // Set Fill Color Based on Win in Current Year
         function style(feature, activeYear="19") {
             var fillColor;
@@ -66,11 +61,6 @@
         $.getJSON("countrydata.geojson", function (countryData, activeYear) {
                 L.geoJson(countryData, {
                     style: style,
-                    // Only show active countries
-                    /*filter: function(feature, layer) {
-                        return feature.properties.showOnMap;
-                    } */
-
                 }).addTo(countries);
             });
 
