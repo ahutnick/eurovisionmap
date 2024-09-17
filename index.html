@@ -30,7 +30,8 @@
         map.getPane('labels').style.pointerEvents = 'none';
 
         var positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png', {
-            attribution: '©OpenStreetMap, ©CartoDB'
+            attribution: '©OpenStreetMap, ©CartoDB',
+            layers: [positron, countries, positronLabels]
         }).addTo(map);
 
         var positronLabels = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png', {
@@ -39,12 +40,13 @@
         }).addTo(map);
 
         // Set Fill Color Based on Win in Current Year
-        function style(feature, activeYear="19") {
+        function style(feature, activeYear="9") {
             var fillColor;
-            var winners = feature.properties.wins[activeYear]
+            var winners = feature.properties.wins[activeYear];
             if (!winners) {
                 fillColor = "#dedede";
             } else if (winners["winner"]) {
+                if (activeYear === "21") console.log(feature.properties.name);
                 fillColor = "#faf205";
             } else if (winners["televote"]) {
                 fillColor = "#f50ac3";
@@ -54,35 +56,78 @@
             return { color: "#000000", weight: 2, fillColor: fillColor, fillOpacity: .6 }
         }
 
+        // Change Active Year + Update Country Style
+        function updateCountries(activeYear) {
+            countries.eachLayer((layer) => {
+                var feature = Object.values(layer._layers)[0].feature;
+                layer.setStyle(style(feature, activeYear));
+            });
+        }
+
+        // Click Handler for Marker
+        function onClick(e, activeYear) {
+            updateCountries(activeYear);
+        }
+
         // Create Layer Group for Easier Style Switching
         var countries = L.layerGroup().addTo(map);
 
+
         // Load in geoJSON to Layer Group
-        $.getJSON("countrydata.geojson", function (countryData, activeYear) {
-                L.geoJson(countryData, {
-                    style: style,
-                }).addTo(countries);
+        $.getJSON("countrydata.geojson", function (countryData) {
+                countryData.features.forEach(feature => {
+                    L.geoJson(feature, { style: style }).addTo(countries);
+                });
             });
 
         // Host City Markers (currently set to city coordinates except for 2024)
         var markers = []
-        markers.push(L.marker([55.761480634243156, 37.65177582945458]).bindPopup('2009: Moscow, Russia').addTo(map).openPopup());
-        markers.push(L.marker([59.913722734735764, 10.75146110137051]).bindPopup('2010: Oslo, Norway').addTo(map));
-        markers.push(L.marker([51.222000066591775, 6.777945629354757]).bindPopup('2011: Düsseldorf, Germany').addTo(map));
-        markers.push(L.marker([40.40911651084919, 49.87279717970986]).bindPopup('2012: Baku, Azerbaijan').addTo(map));
-        markers.push(L.marker([55.604207176905376, 13.004288332607715]).bindPopup('2013: Malmö, Sweden').addTo(map));
-        markers.push(L.marker([55.676079797517744, 12.564981993068116]).bindPopup('2014: Copenhagen, Denmark').addTo(map));
-        markers.push(L.marker([48.20709693896373, 16.372161468666455]).bindPopup('2015: Vienna, Austria').addTo(map));
-        markers.push(L.marker([59.32673853128823, 18.072679759336534]).bindPopup('2016: Stockholm, Sweden').addTo(map));
-        markers.push(L.marker([50.45668409173789, 30.534014165082667]).bindPopup('2017: Kyiv, Ukraine').addTo(map));
-        markers.push(L.marker([38.7215539348787, -9.1387970150705]).bindPopup('2018: Lisbon, Portugal').addTo(map));
-        markers.push(L.marker([32.0838839158771, 34.78233091145113]).bindPopup('2019: Tel Aviv, Israel').addTo(map));
+        markers.push(L.marker([55.761480634243156, 37.65177582945458])
+            .bindPopup('<b>2009</b><br>Host: Moscow, Russia<br>Winner: Norway, "Fairytale", Alexander Rybak<br>Jury Vote Winner: Norway, "Fairytale", Alexander Rybak<br>Televote Winner: Norway, "Fairytale", Alexander Rybak')
+            .on({click: (e) => onClick(e, "9")}).addTo(map).openPopup());
+        markers.push(L.marker([59.913722734735764, 10.75146110137051])
+            .bindPopup('<b>2010</b><br>Host: Oslo, Norway<br>Winner: Germany, "Satelite", Lena<br>Jury Vote Winner: Germany, "Satelite", Lena<br>Televote Winner: Germany, "Satelite", Lena')
+            .on({ click:(e) => onClick(e, "10") }).addTo(map));
+        markers.push(L.marker([51.222000066591775, 6.777945629354757])
+            .bindPopup('<b>2011</b><br>Host: Düsseldorf, Germany<br>Winner: Azerbaijan, "Running Scared", Ell/Nikki<br>Jury Vote Winner: Italy, "Madness of Love", Raphael Gualazzi<br>Televote Winner: Azerbaijan, "Running Scared", Ell/Nikki')
+            .on({ click: (e) =>  onClick(e, "11") }).addTo(map));
+        markers.push(L.marker([40.40911651084919, 49.87279717970986])
+            .bindPopup('<b>2012</b><br>Host: Baku, Azerbaijan<br>Winner: Sweden, "Euphoria", Loreen<br>Jury Vote Winner: Sweden, "Euphoria", Loreen<br>Televote Winner: Sweden, "Euphoria", Loreen')
+            .on({ click: (e) =>  onClick(e, "12") }).addTo(map));
+        markers.push(L.marker([55.604207176905376, 13.004288332607715])
+            .bindPopup('<b>2013</b><br>Host: Malmö, Sweden<br>Winner: Denmark, "Only Teardrops", Emmelie de Forest<br>Jury Vote Winner: Denmark, "Only Teardrops", Emmelie de Forest<br>Televote Winner: Denmark, "Only Teardrops", Emmelie de Forest')
+            .on({ click: (e) =>  onClick(e, "13") }).addTo(map));
+        markers.push(L.marker([55.676079797517744, 12.564981993068116])
+            .bindPopup('<b>2014</b><br>Host: Copenhagen, Denmark<br>Winner: Austria, "Rise Like a Phoenix", Conchita Wurst<br>Jury Vote Winner: Austria, "Rise Like a Phoenix", Conchita Wurst<br>Televote Winner: Austria, "Rise Like a Phoenix", Conchita Wurst')
+            .on({ click: (e) =>  onClick(e, "14") }).addTo(map));
+        markers.push(L.marker([48.20709693896373, 16.372161468666455])
+            .bindPopup('<b>2015</b><br>Host: Vienna, Austria<br>Winner: Sweden, "Heroes", Måns Zemerlöw<br>Jury Vote Winner: Sweden, "Heroes", Måns Zemerlöw<br>Televote Winner: "Grande Amore", Il Volo')
+            .on({ click: (e) =>  onClick(e, "15") }).addTo(map));
+        markers.push(L.marker([59.32673853128823, 18.072679759336534])
+            .bindPopup('<b>2016</b><br>Host: Stockholm, Sweden<br>Winner: Ukraine, "1944", Jamala<br>Jury Vote Winner: Australia, "Sound of Silence", Dami Im<br>Televote Winner: Russia, "You Are the Only One", Sergey Lazarev')
+            .on({ click: (e) =>  onClick(e, "16") }).addTo(map));
+        markers.push(L.marker([50.45668409173789, 30.534014165082667])
+            .bindPopup('<b>2017</b><br>Host: Kyiv, Ukraine<br>Winner: Portugal, "Amar pelos dois", Salvador Sobral<br>Jury Vote Winner: Portugal, "Amar pelos dois", Salvador Sobral<br>Televote Winner: Winner: Portugal, "Amar pelos dois", Salvador Sobral')
+            .on({ click: (e) =>  onClick(e, "17") }).addTo(map));
+        markers.push(L.marker([38.7215539348787, -9.1387970150705])
+            .bindPopup('<b>2018</b><br>Host: Lisbon, Portugal<br>Winner: Israel, "Toy", Netta<br>Jury Vote Winner: Austria, "Nobody But You", Cesár Sampson<br>Televote Winner: Israel, "Toy", Netta')
+            .on({ click: (e) =>  onClick(e, "18") }).addTo(map));
+        markers.push(L.marker([32.0838839158771, 34.78233091145113])
+            .bindPopup('<b>2019</b><br>Host: Tel Aviv, Israel</b>Winner: Netherlands, "Arcade", Duncan Laurence<br>Jury Vote Winner: North Macedonia, "Proud", Tamara Todevska<br>Televote Winner: Norway, "Spirit in the Sky", KEiiNO')
+            .on({ click: (e) =>  onClick(e, "19") }).addTo(map));
         // Placeholder for 2020 - To Add Later
-        markers.push(null);
-        markers.push(L.marker([51.92499328957138, 4.47812209293861]).bindPopup('2021: Rotterdam, Netherlands').addTo(map));
-        markers.push(L.marker([45.068412068030895, 7.688968426987515]).bindPopup('2022: Turin, Italy').addTo(map));
-        markers.push(L.marker([53.409524626854974, -2.9975656703291174]).bindPopup('2023: Liverpool, United Kingdom').addTo(map));
-        markers.push(L.marker([55.563800975211564, 12.976248883705855]).bindPopup('2024: Malmö, Sweden').addTo(map));
+        markers.push(L.marker([51.92499328957138, 4.47812209293861])
+            .bindPopup('<b>2021</b><br>Host: Rotterdam, Netherlands<br>Winner: Italy, "Zitti e Buoni", Måneskin<br>Jury Vote Winner: Switzerland, "Tout l\'univers", Gjon\'s Tears<br>Televote Winner: Italy, "Zitti e Buoni", Måneskin')
+            .on({ click: (e) => onClick(e, "21") }).addTo(map));
+        markers.push(L.marker([45.068412068030895, 7.688968426987515])
+            .bindPopup('<b>2022</b><br>Host: Turin, Italy<br>Winner: Ukraine, "Stefania", Kalush Orchestra<br>Jury Vote Winner: United Kingdom, "Space Man", Sam Ryder<br>Televote Winner: Ukarine, "Stefania", Kalush Orchestra')
+            .on({ click: (e) => onClick(e, "22") }).addTo(map));
+        markers.push(L.marker([53.409524626854974, -2.9975656703291174])
+            .bindPopup('<b>2023</b><br>Host: Liverpool, United Kingdom<br>Winner: Sweden, "Tattoo", Loreen<br>Jury Vote Winner: Sweden, "Tattoo", Loreen<br>Televote Winner: "Cha Cha Cha", Käärijä')
+            .on({ click: (e) => onClick(e, "23") }).addTo(map));
+        markers.push(L.marker([55.563800975211564, 12.976248883705855])
+            .bindPopup('<b>2024</b><br>Host: Malmö, Sweden<br>Winner: Switzerland, "The Code", Nemo<br>Jury Vote Winner: Switzerland, "The Code", Nemo<br>Televote Winner: Croatia, "Rim Tim Tagi Tim", Baby Lasagna')
+            .on({ click: (e) => onClick(e, "24") }).addTo(map));
     </script>
 </body>
 
